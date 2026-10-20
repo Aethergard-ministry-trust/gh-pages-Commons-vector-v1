@@ -1,0 +1,151 @@
+{
+  "schema": "commons-vector-v1/ai-agent-instrument/1.0",
+  "record_type": "ai-agent-definition",
+  "status": "unsigned-declaration",
+  "namespace": "commons-vector-v1",
+  "name": "actofzero-0x13-CVD-Mentalism-minestry — kyballion-CVP-IPFS-tri-vector-Intelligence Agent",
+  "version": "draft-1",
+  "dictionary": {
+    "name": "TRUST-ORDBOK-v2.0-IPFS.json",
+    "declared_cid": "bafkreiah7zzhane2iwpijyx7qiuwajqbmaep3a4pnvuo5f4jcakm4ibnzi"
+  },
+  "tri_vector": {
+    "tri_vector": "1a0de0b-f30c",
+    "spatial_vector": "7e34-88a8",
+    "rule_vector": "057e4f535abc",
+    "content": {
+      "definition_file": "AI-AGENT-INSTRUMENT.json",
+      "agent_definition_cid": null,
+      "agent_definition_cid_note": "Compute only after this definition is finalized and its exact bytes are stable."
+    }
+  },
+  "model": {
+    "declared_name": "actofzero-0x13-CVD-Mentalism-minestry",
+    "artifact_status": "not-yet-identified",
+    "weights_cid": null,
+    "license": null,
+    "training_provenance": null,
+    "note": "The model's presence or weights cannot be inferred from the Linux ISO filename."
+  },
+  "agent": {
+    "declared_name": "kyballion-CVP-IPFS-tri-vector-Intelligence Agent",
+    "framework": {
+      "name": "Hermes Agent",
+      "source": "User-supplied local-first Hermes deployment notes",
+      "version": null,
+      "integration_status": "proposed; installation in the supplied ISO is unverified"
+    },
+    "purpose": "Help a user inspect selected content, prepare CVP instrument drafts, and explain verification results.",
+    "runtime": {
+      "name": "Hermes Agent runtime",
+      "status": "version-and-installation-not-yet-verified",
+      "version": null,
+      "artifact_cid": null
+    },
+    "gateway": {
+      "name": "Hermes Gateway",
+      "role": "Optional channel/API entry point for Hermes agent sessions; not a replacement for the CVP archive.",
+      "default_binding": "loopback-only for local HTTP API",
+      "external_channels": "Telegram, Discord, Slack, Signal, email, and other integrations are opt-in and may transmit prompts or data to external services.",
+      "status": "configuration and deployment not verified"
+    },
+    "distribution": {
+      "file": "linux-ai-1.0-star-cinnamon-amd64.iso",
+      "declared_local_path": "Downloads/linux-ai-1.0-star-cinnamon-amd64.iso (owner-local, not published)",
+      "size_bytes": 13740867584,
+      "detected_format": "ISO 9660 CD-ROM filesystem data, DOS/MBR boot sector; file utility reports a bootable image",
+      "sha512": "7349c881dc60d93d3c886eb22e452f9e0964bf429e8ee679295fcfdcb215bc04f7aa775bcca8b53ee92f3dd65faec6a89bde92952d3e7fa1b7f3779ec444f0f2",
+      "cid": "bafkrgqdtjheidxda3e6tzcdowixekl46bfsl6qu6r3thskk7z7olefn4at32u523zsulkpxjf465mx5oy2ujxxussuwt475bw7zxphweitype",
+      "distribution_instrument": "LINUX-AI-STAR-DISTRIBUTION-INSTRUMENT.json",
+      "verification_status": "local-file-bytes-hashed",
+      "boot_test_status": "not-tested-in-a-virtual-machine",
+      "note": "Format signature and bootable image metadata were detected. This does not identify the distribution contents, origin, AI model, or prove that the image boots successfully."
+    }
+  },
+  "inference": {
+    "deployment_goal": "local-first",
+    "backend_candidates_from_supplied_notes": [
+      "Ollama",
+      "llama.cpp"
+    ],
+    "configured_backend": null,
+    "configured_model": null,
+    "cloud_fallback": "must be explicitly disabled or configured for auxiliary tasks; local primary inference alone does not guarantee that every tool or auxiliary request stays local"
+  },
+  "agency_policy": {
+    "default": "local-read-and-draft",
+    "requires_explicit_human_approval": [
+      "write-or-delete-files",
+      "execute-shell-or-code",
+      "download-models-or-updates",
+      "network-access",
+      "retrieve-or-publish-ipfs-content",
+      "publish-to-github",
+      "sign-or-register-an-instrument",
+      "install-or-change-operating-system-software"
+    ],
+    "prohibited_by_default": [
+      "silent-background-file-scanning",
+      "automatic-signing",
+      "automatic-publication",
+      "sending-private-keys-or-access-tokens-to-models-or-tools"
+    ],
+    "enforcement_status": "declared-policy-only; runtime enforcement is not implemented or verified by this record"
+  },
+  "learning_model": {
+    "mode": "separate-base-model-memory-and-finetuned-artifacts",
+    "base_model": {
+      "mutable_in_place": false,
+      "updates_require": [
+        "new-versioned-model-artifact",
+        "new-content-digest-and-cid",
+        "license-and-source-record",
+        "human-approval"
+      ]
+    },
+    "memory": {
+      "storage": "Hermes profile files under the selected local user profile (for example ~/.hermes/profiles/<profile>/), subject to verification of the installed version",
+      "representation": "Keep editable Hermes working memory separate from exported, append-only CVP provenance records",
+      "default_network_sync": false,
+      "record_sensitive_content_only_with_explicit_user_choice": true
+    },
+    "project_isolation": {
+      "mechanism": "Hermes profiles",
+      "intended_separation": [
+        "project configuration",
+        "skills and enabled toolsets",
+        "memory and sessions",
+        "gateway ports"
+      ],
+      "must_be_tested": true
+    },
+    "local_finetuning": {
+      "enabled": false,
+      "requires_explicit_opt_in": true,
+      "output_is_separate_model_artifact": true,
+      "requires_training_data_provenance_and_license_review": true
+    }
+  },
+  "verification": {
+    "recorded_claims_may_include": [
+      "declared model and runtime identifiers",
+      "content digests and CIDs",
+      "agent policy version",
+      "user-approved tool actions",
+      "references to separate memory or fine-tuned-model instruments"
+    ],
+    "does_not_prove": [
+      "the truth of model outputs",
+      "the real-world identity of an operator",
+      "that the declared model or runtime was actually executed",
+      "legal status, patent rights, ownership, or jurisdiction",
+      "safety or security of the operating system or model"
+    ]
+  },
+  "provenance": {
+    "signature": null,
+    "instrument_cid": null,
+    "archive_recorded": false,
+    "status": "draft-not-signed-or-registered"
+  }
+}

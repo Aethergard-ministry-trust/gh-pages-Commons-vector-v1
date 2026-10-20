@@ -1,0 +1,56 @@
+{
+  "schema": "commons-vector-v1/distribution-instrument/1.0",
+  "record_type": "software-distribution-reference",
+  "status": "unsigned-local-content-reference",
+  "namespace": "commons-vector-v1",
+  "name": "CVP Kybalion Linux-AI 1.0 \"Star\"",
+  "artifact": {
+    "filename": "linux-ai-1.0-star-cinnamon-amd64.iso",
+    "owner_local_path": "Downloads/linux-ai-1.0-star-cinnamon-amd64.iso (not included in Pages bundle)",
+    "size_bytes": 13740867584,
+    "media_type": "application/x-iso9660-image",
+    "digest": {
+      "algorithm": "SHA-512",
+      "value": "7349c881dc60d93d3c886eb22e452f9e0964bf429e8ee679295fcfdcb215bc04f7aa775bcca8b53ee92f3dd65faec6a89bde92952d3e7fa1b7f3779ec444f0f2"
+    },
+    "cid": {
+      "value": "bafkrgqdtjheidxda3e6tzcdowixekl46bfsl6qu6r3thskk7z7olefn4at32u523zsulkpxjf465mx5oy2ujxxussuwt475bw7zxphweitype",
+      "version": 1,
+      "codec": "raw",
+      "multihash": "sha2-512"
+    }
+  },
+  "tri_vector": {
+    "tri_vector": "1a0de0b-f30c",
+    "spatial_vector": "trust:commons-vector-v1:living:distributions/linux-ai-1.0-star",
+    "rule_vector": "dictionary:TRUST-ORDBOK-v2.0-IPFS.json; namespace:commons-vector-v1; public:software-distribution-reference",
+    "vector_identifiers": {
+      "tri_vector": "1a0de0b-f30c",
+      "spatial_vector": "7e34-88a8",
+      "rule_vector": "057e4f535abc"
+    }
+  },
+  "inspection": {
+    "format_detection": "ISO 9660 CD-ROM filesystem data, DOS/MBR boot sector; file utility reports a bootable image",
+    "format_detected": true,
+    "virtual_machine_boot_test": "not-performed",
+    "source_origin_verified": false,
+    "base_distribution_identified": false,
+    "model_and_runtime_contents_verified": false,
+    "notes": [
+      "SHA-512 and CID identify the exact local image bytes; they do not authenticate who built the image.",
+      "Format markers do not prove that the image boots successfully.",
+      "The image contents have not been inspected; the filename does not prove that any named AI model or agent is installed."
+    ]
+  },
+  "references": {
+    "agent_instrument": "AI-AGENT-INSTRUMENT.json",
+    "architecture_outline": "CVP-KYBALION-LINUX-AI-STAR.md"
+  },
+  "provenance": {
+    "signature": null,
+    "instrument_cid": null,
+    "archive_recorded": false,
+    "status": "unsigned-reference-not-registered"
+  }
+}

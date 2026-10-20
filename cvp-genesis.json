@@ -1,0 +1,75 @@
+{
+    "schema":  "commons-vector-v1/genesis-descriptor/1.0",
+    "namespace":  "commons-vector-v1",
+    "title":  "Det Levende Arkivet — Genesis descriptor",
+    "status":  "unsigned-public-descriptor",
+    "purpose":  "Defines the public namespace, vocabulary reference, and document coordinates used by this demonstration.",
+    "dictionary":  {
+                       "name":  "TRUST-ORDBOK-v2.0-IPFS.json",
+                       "declared_cid":  "bafkreiah7zzhane2iwpijyx7qiuwajqbmaep3a4pnvuo5f4jcakm4ibnzi",
+                       "local_view":  "cvp-dictionary.json",
+                       "cid_verification":  "The CID is a declared source reference and is not recomputed from the supplied mixed-format local file."
+                   },
+    "vectors":  {
+                    "tri_vector":  {
+                                       "identifier":  "1a0de0b-f30c",
+                                       "meaning":  "Content identity and instrument context"
+                                   },
+                    "spatial_vector":  {
+                                           "identifier":  "7e34-88a8",
+                                           "meaning":  "Position within the namespace"
+                                       },
+                    "rule_vector":  {
+                                        "identifier":  "057e4f535abc",
+                                        "meaning":  "Dictionary/schema/policy context"
+                                    }
+                },
+    "trust_source":  {
+                         "file":  "cvp-ministry-trust-source.json",
+                         "status":  "source text in valid JSON envelope; access credentials redacted",
+                         "original_changed":  false
+                     },
+    "archive":  {
+                    "app":  "index.html",
+                    "model":  "browser-local signed records and verification",
+                    "global_registry":  false
+                },
+    "future_platform": {
+        "name": "CVP Kybalion Linux-AI 1.0 Star",
+        "status": "user-supplied-iso-present; contents-and-bootability-unverified",
+        "architecture_outline": "CVP-KYBALION-LINUX-AI-STAR.md",
+        "distribution_file": "linux-ai-1.0-star-cinnamon-amd64.iso",
+        "distribution_bytes": 13740867584,
+        "distribution_instrument": "LINUX-AI-STAR-DISTRIBUTION-INSTRUMENT.json",
+        "distribution_sha512": "7349c881dc60d93d3c886eb22e452f9e0964bf429e8ee679295fcfdcb215bc04f7aa775bcca8b53ee92f3dd65faec6a89bde92952d3e7fa1b7f3779ec444f0f2",
+        "distribution_cid": "bafkrgqdtjheidxda3e6tzcdowixekl46bfsl6qu6r3thskk7z7olefn4at32u523zsulkpxjf465mx5oy2ujxxussuwt475bw7zxphweitype",
+        "base_direction": "identify the supplied ISO base before choosing an integration target",
+        "format_detected": "ISO 9660 with DOS/MBR boot marker; not tested in a virtual machine",
+        "model_contents_verified": false,
+        "included_in_pages_bundle": false
+    },
+    "ai_agent_instrument": "AI-AGENT-INSTRUMENT.json",
+    "hermes_agent_architecture": {
+        "document": "HERMES-CVP-AGENT-ARCHITECTURE.md",
+        "framework": "Hermes Agent",
+        "status": "proposed-installation-and-version-unverified"
+    },
+    "hog_topology": {
+        "status": "documentation-derived-proposal-not-deployed",
+        "document": "HOG-CVP-DEPLOYMENT-TOPOLOGY.md",
+        "descriptor": "HOG-CVP-TOPOLOGY.json",
+        "source": "https://paulopiriquito.github.io/hog/architecture/deployment/"
+    },
+    "documents": "documents/cvp-document-catalog.json",
+    "boundaries":  [
+                       "This descriptor is not cryptographically signed.",
+                       "Local hash and signature checks do not establish real-world identity or trusted time.",
+                       "Publishing a CID does not by itself establish a patent, legal ownership, enforceable trust, or jurisdiction.",
+                       "The archive prototype does not guarantee global first-writer ordering or persistent availability."
+                   ],
+    "provenance":  {
+                       "signature":  null,
+                       "archive_recorded":  false,
+                       "record_status":  "descriptor-only"
+                   }
+}

@@ -1,0 +1,115 @@
+{
+  "schema": "commons-vector-v1/deployment-topology/1.0",
+  "record_type": "proposed-deployment-architecture",
+  "status": "documentation-derived-proposal-not-deployed",
+  "namespace": "commons-vector-v1",
+  "name": "HOG Gateway for CVP",
+  "source_documentation": "https://paulopiriquito.github.io/hog/architecture/deployment/",
+  "design_document": "HOG-CVP-DEPLOYMENT-TOPOLOGY.md",
+  "scope": {
+    "static_pages": "GitHub Pages continues to serve the public presentation, PDFs, image, and public JSON without requiring HOG.",
+    "authenticated_services": "Use HOG only if separately hosted CVP APIs, login, private archive services, or a remotely accessible Hermes Gateway need an authenticated ingress.",
+    "deployment_status": "No HOG source, container image, hog.yaml, Compose stack, identity provider, API, or node has been deployed by this proposal."
+  },
+  "network_topology": {
+    "public_ingress": {
+      "terminates_tls": true,
+      "forwards_to_hog_over": "private network; use TLS/mTLS if this hop is not otherwise trusted",
+      "rewrites_client_forwarded_headers": true
+    },
+    "frontend_gateway": {
+      "replicas": "N identical replicas, if supported by the selected HOG release",
+      "role": "OIDC authorization-code flow and browser session",
+      "client_secret_required": true,
+      "session": "sealed stateless cookie by default; optional opaque ID backed by a TTL StateStore when configured"
+    },
+    "api_verification_gateway": {
+      "replicas": "N identical replicas, if supported by the selected HOG release",
+      "role": "verify bearer access tokens before protected APIs",
+      "verification_only": true,
+      "client_secret_required": false,
+      "login_routes": false,
+      "redirect_uri": false
+    },
+    "backend_services": [
+      "CVP API, if implemented and deployed",
+      "Hermes Gateway and Hermes Agent, if separately installed, configured, and deployed",
+      "Kubo API on a restricted private/local network"
+    ],
+    "kubo_publicly_exposed": false
+  },
+  "hermes_gateway": {
+    "role": "Optional channel/HTTP entry point to the Hermes Agent; distinct from HOG.",
+    "requires_hog": false,
+    "local_api_default": "Bind to loopback unless remote access is intentionally configured.",
+    "external_channels": "Enable only by choice; messaging platforms and external tools can send prompts or data off-device.",
+    "installed_in_distribution_verified": false,
+    "architecture_document": "HERMES-CVP-AGENT-ARCHITECTURE.md"
+  },
+  "trust_boundaries": {
+    "trusted_proxies": {
+      "default": [],
+      "production_rule": "Configure only the exact immediate ingress/load-balancer peer IPs or CIDRs after confirming header sanitization.",
+      "wildcard_allowed": false,
+      "header_stripping": "Treat forwarded headers as untrusted unless the immediate peer is in the trusted-proxy allowlist."
+    },
+    "session_key": {
+      "shared_across_session_replicas": true,
+      "store_in_source_control": false,
+      "rotation_plan_required": true
+    },
+    "identity_assertions": "Accept forwarded identity assertions only over a protected authenticated gateway-to-backend hop; validate token issuer, audience, signature, allowed algorithm, expiry, and relevant claims.",
+    "ai_agency": "HOG/Hermes gateway authentication is not agent authorization; require explicit approval for writes, code execution, external network access, IPFS publication, signing, OS changes, and GitHub publication.",
+    "private_keys_and_tokens": "Do not pass signing keys, OIDC secrets, session keys, or access tokens into model prompts or public CVP records."
+  },
+  "session_modes": {
+    "stateless_cookie": {
+      "default_in_source_documentation": true,
+      "server_side_session_store": false,
+      "silent_refresh": false,
+      "shared_session_key_required": true
+    },
+    "state_provider": {
+      "opt_in": true,
+      "store_contract": "encrypted key-value records with TTL; selected plugin must be reviewed",
+      "refresh_token_server_side_only": true,
+      "backend_dependency": "Introduces shared session storage, not a shared gateway control plane.",
+      "failure_policy": "Fail closed on unreadable or unavailable session state, as specified by the HOG documentation."
+    }
+  },
+  "observability": {
+    "otlp_export": "disabled unless an operator configures an endpoint",
+    "sensitive_values_in_logs_or_traces": false,
+    "document_data_leaving_host_before_enablement": true
+  },
+  "container_claims_from_source_documentation": {
+    "images": [
+      "hog-runtime",
+      "hog-static",
+      "hog-builder"
+    ],
+    "runtime_claims": {
+      "listen_port": 8080,
+      "non_root_uid_gid": 10001,
+      "read_only_root_filesystem_target": true
+    },
+    "verification_required_before_use": [
+      "inspect source and versioned configuration schema",
+      "verify build stages, supported compiler/base image, and published image digest",
+      "review plugins, SBOM, and security update policy",
+      "test read-only/non-root operation and required writable paths"
+    ]
+  },
+  "protocol_limits": [
+    "Stateless gateway replicas do not create global archive consensus or first-writer-wins ordering.",
+    "HOG ingress does not centralize the current browser-local CVP archive or its signing key.",
+    "A content CID does not guarantee that content remains available.",
+    "This topology does not establish identity, legal jurisdiction, ownership, patent rights, or legal effect."
+  ],
+  "provenance": {
+    "signature": null,
+    "instrument_cid": null,
+    "deployed": false,
+    "status": "unsigned-architecture-descriptor"
+  }
+}

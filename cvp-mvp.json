@@ -1,0 +1,77 @@
+{
+  "protocol": "Commons Vector Protocol",
+  "version": "commons-vector-v1",
+  "namespace": "commons-vector-v1",
+  "title": "Det Levende Arkivet",
+  "purpose": "A browser-based demonstration of signed, content-addressed instruments and linked provenance records.",
+  "genesis_dictionary": {
+    "name": "TRUST-ORDBOK-v2.0-IPFS.json",
+    "cid": "bafkreiah7zzhane2iwpijyx7qiuwajqbmaep3a4pnvuo5f4jcakm4ibnzi"
+  },
+  "vectors": {
+    "tri_vector": {
+      "value": "1a0de0b-f30c",
+      "role": "Identity and instrument context"
+    },
+    "spatial_vector": {
+      "value": "7e34-88a8",
+      "role": "Position within the namespace"
+    },
+    "rule_vector": {
+      "value": "057e4f535abc",
+      "role": "Interpretation and protocol rules"
+    }
+  },
+  "foundational_objects": [
+    "dictionary",
+    "instrument",
+    "CID",
+    "provenance"
+  ],
+  "prototype_features": {
+    "signatures": "Ed25519 using the browser Web Crypto API",
+    "payload_digest": "SHA-512",
+    "payload_cid": "CIDv1, raw codec and sha2-512 multihash, unless an external CID is supplied",
+    "instrument_cid": "CIDv1, raw codec and sha2-512 multihash over the canonical instrument including its signature",
+    "chain": "Each instrument references the previous instrument CID; genesis uses the GENESIS marker and SELF root marker",
+    "storage": "Records in browser local storage; non-extractable signing key in IndexedDB",
+    "ipfs": "Optional user-triggered local Kubo raw-block upload and pin for payloads up to 2 MiB",
+    "archive": "JSON export and verification-before-import"
+  },
+  "limitations": [
+    "Local browser records are not a global or first-writer-wins registry.",
+    "The prototype does not automatically retrieve or re-hash payload bytes during later chain verification.",
+    "A valid signature proves control of the corresponding private key, not a real-world identity, factual truth, trusted time, or legal effect.",
+    "The standalone page does not implement Pinata uploads or store Pinata API credentials.",
+    "The prototype does not establish legal jurisdiction, ownership, or statutory rights."
+  ],
+  "pages_app": "index.html",
+  "presentation_image": "assets/commons-vector-presentation.png",
+  "presentation_source": "cvp-mvp-source.md",
+  "genesis_descriptor": "cvp-genesis.json",
+  "linux_ai_star_concept": "CVP-KYBALION-LINUX-AI-STAR.md",
+  "ai_agent_instrument": "AI-AGENT-INSTRUMENT.json",
+  "hermes_agent_architecture": "HERMES-CVP-AGENT-ARCHITECTURE.md",
+  "distribution_instrument": "LINUX-AI-STAR-DISTRIBUTION-INSTRUMENT.json",
+  "hog_topology_document": "HOG-CVP-DEPLOYMENT-TOPOLOGY.md",
+  "hog_topology_descriptor": "HOG-CVP-TOPOLOGY.json",
+  "linux_ai_distribution": {
+    "file": "linux-ai-1.0-star-cinnamon-amd64.iso",
+    "size_bytes": 13740867584,
+    "sha512": "7349c881dc60d93d3c886eb22e452f9e0964bf429e8ee679295fcfdcb215bc04f7aa775bcca8b53ee92f3dd65faec6a89bde92952d3e7fa1b7f3779ec444f0f2",
+    "content_cid": "bafkrgqdtjheidxda3e6tzcdowixekl46bfsl6qu6r3thskk7z7olefn4at32u523zsulkpxjf465mx5oy2ujxxussuwt475bw7zxphweitype",
+    "included_in_pages_bundle": false,
+    "format_detected": "ISO 9660 with DOS/MBR boot marker",
+    "virtual_machine_boot_tested": false,
+    "model_contents_verified": false
+  },
+  "observer_model": "The home page describes where source files, browser records and keys, public site assets, and optional local Kubo uploads reside.",
+  "dictionary_view": "cvp-dictionary.json",
+  "trust_source": "cvp-ministry-trust-source.json",
+  "documents": [
+    "documents/Commons_Vector_Protocol.pdf",
+    "documents/Commons_Vector_Protocol_Audit_Guide.pdf",
+    "documents/Gmail_All_Three_Deliverables.pdf"
+  ],
+  "document_catalog": "documents/cvp-document-catalog.json"
+}
