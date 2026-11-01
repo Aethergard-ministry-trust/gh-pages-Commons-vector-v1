@@ -1,0 +1,146 @@
+{
+  "dictionary": {
+    "name": "TRUST-ORDBOK-v2.0-IPFS",
+    "version": "2.0",
+    "namespace": "commons-vector-v1",
+    "genesis_cid": "bafkreiah7zzhane2iwpijyx7qiuwajqbmaep3a4pnvuo5f4jcakm4ibnzi",
+    "description": "The shared reference dictionary for the Commons Vector Protocol (CVP) namespace. Defines terms, vectors, and governance rules for CVP instruments.",
+    "context": {
+      "tri_vector": "1a0de0b-f30c",
+      "spatial_vector": "7e34-88a8",
+      "rule_vector": "057e4f535abc",
+      "composite_key_formula": "SHA-512(CID + ':' + spatial_vector + ':' + rule_vector)"
+    },
+    "provenance": {
+      "created": "2023-10-16T00:00:00Z",
+      "status": "GENESIS",
+      "signature": {
+        "algorithm": "ed25519",
+        "public_key": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+        "value": "2d8f9a1b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f"
+      }
+    }
+  },
+  "terms": {
+    "CID": {
+      "definition": "Content Identifier; a cryptographic hash (SHA-256 or SHA-512) used to uniquely identify content in IPFS.",
+      "type": "technical",
+      "example": "bafkreiah7zzhane2iwpijyx7qiuwajqbmaep3a4pnvuo5f4jcakm4ibnzi"
+    },
+    "tri_vector": {
+      "definition": "The identity vector in the CVP tri-vector system. Represents 'who' or 'what' the instrument is.",
+      "type": "vector",
+      "example": "1a0de0b-f30c",
+      "purpose": "Defines the entity or context of the instrument."
+    },
+    "spatial_vector": {
+      "definition": "The location vector in the CVP tri-vector system. Represents 'where' the instrument exists in the namespace.",
+      "type": "vector",
+      "example": "7e34-88a8",
+      "purpose": "Defines the position or scope within the trust namespace."
+    },
+    "rule_vector": {
+      "definition": "The interpretation vector in the CVP tri-vector system. Represents 'how' the instrument is governed or interpreted.",
+      "type": "vector",
+      "example": "057e4f535abc",
+      "purpose": "Defines the rules, policies, or schema context."
+    },
+    "composite_key": {
+      "definition": "A SHA-512 hash derived from the combination of CID, spatial_vector, and rule_vector. Used as a unique identifier for CVP instruments.",
+      "type": "technical",
+      "formula": "SHA-512(CID + ':' + spatial_vector + ':' + rule_vector)"
+    },
+    "provenance_chain": {
+      "definition": "A linked sequence of CVP instruments, where each instrument references the previous one via its composite key. Ensures immutability and traceability.",
+      "type": "process",
+      "example": "Instrument A → Instrument B → GENESIS"
+    },
+    "instrument": {
+      "definition": "A signed, content-addressed record in the CVP system. Contains metadata, vectors, and a signature.",
+      "type": "object",
+      "fields": ["cid", "tri_vector", "spatial_vector", "rule_vector", "signature", "previous"]
+    },
+    "GENESIS": {
+      "definition": "The first instrument in a CVP namespace, typically the TRUST-ORDBOK dictionary. Acts as the anchor for all subsequent instruments.",
+      "type": "instrument",
+      "cid": "bafkreiah7zzhane2iwpijyx7qiuwajqbmaep3a4pnvuo5f4jcakm4ibnzi"
+    },
+    "Det Levende Arkivet": {
+      "definition": "The Living Archive; a historical database where all CVP instruments and their provenance chains are stored and preserved.",
+      "type": "system",
+      "purpose": "Preserves the memory and history of records without requiring content storage."
+    },
+    "training_data": {
+      "definition": "A curated dataset used for training machine learning models, stored as a CVP instrument with provenance.",
+      "type": "data",
+      "metadata": {
+        "format": "JSONL, Parquet, or CAR",
+        "license": "Apache-2.0 (default)"
+      }
+    },
+    "model_asset": {
+      "definition": "A trained AI model or its weights, stored as a CVP instrument with full provenance of its training data.",
+      "type": "asset",
+      "example": "neuralcommons-mistral (fine-tuned Mistral model)"
+    },
+    "ollama": {
+      "definition": "An open-source framework for running and fine-tuning large language models locally.",
+      "type": "tool",
+      "compatibility": ["mistral", "llama2", "phi"]
+    },
+    "fine_tuning": {
+      "definition": "The process of adapting a pre-trained AI model to a specific task or dataset using additional training.",
+      "type": "process",
+      "methods": ["LoRA", "Full Fine-Tuning"]
+    },
+    "LoRA": {
+      "definition": "Low-Rank Adaptation; a parameter-efficient fine-tuning method that modifies only a small subset of model weights.",
+      "type": "technique",
+      "advantages": ["Memory-efficient", "Fast training", "Compatible with consumer GPUs"]
+    },
+    "NeuralCommons": {
+      "definition": "A non-profit organization providing open, verifiable, and ethically sourced AI training data via CVP.",
+      "type": "organization",
+      "mission": "To democratize AI training by ensuring data provenance and transparency."
+    },
+    "Apache-2.0": {
+      "definition": "The Apache License 2.0; a permissive open-source license used for NeuralCommons projects.",
+      "type": "legal",
+      "link": "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "501(c)(3)": {
+      "definition": "A U.S. tax-exempt status for non-profit organizations, applicable to NeuralCommons Foundation.",
+      "type": "legal",
+      "purpose": "Enables tax-deductible donations and grant eligibility."
+    }
+  },
+  "vector_rules": {
+    "tri_vector": {
+      "pattern": "^[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}$",
+      "description": "UUID-like format for identity vectors."
+    },
+    "spatial_vector": {
+      "pattern": "^[a-z0-9:._-]+$",
+      "description": "Hierarchical namespace format (e.g., 'neuralcommons:datasets:v1')."
+    },
+    "rule_vector": {
+      "pattern": "^[a-z0-9;:=._-]+$",
+      "description": "Key-value pairs separated by semicolons (e.g., 'license:Apache-2.0;model:ollama')."
+    }
+  },
+  "governance": {
+    "namespace": "commons-vector-v1",
+    "trust_model": "Self-sovereign; each instrument is signed and verifiable independently.",
+    "boundaries": [
+      "CVP does not establish legal jurisdiction, ownership, or statutory rights.",
+      "CVP provides proof of existence, authorship, and integrity, but not enforcement.",
+      "Publishing a CID does not guarantee persistent availability or global consensus."
+    ]
+  },
+  "metadata": {
+    "created_by": "NeuralCommons Foundation",
+    "contact": "contact@neuralcommons.org",
+    "repository": "https://github.com/neuralcommons/neuralcommons",
+    "license": "Apache-2.0"
+  }
+}

@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{PROJECT_TITLE}} · Provenance viewer</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #111718; --panel: #192122; --line: #34403e; --text: #edf0e9;
+    --muted: #a5b0a9; --accent: #d7ed9c; --ok: #bce8bd; --danger: #ffb4a9;
+    --mono: "Cascadia Code", SFMono-Regular, Consolas, monospace;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); min-width: 320px; }
+  .page { width: min(1080px, calc(100% - 40px)); margin: 0 auto; padding: 32px 0 64px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 13px; margin: 0 0 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .meta { color: var(--muted); font-size: 13px; font-family: var(--mono); overflow-wrap: anywhere; }
+  a { color: var(--accent); }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin-top: 24px; align-items: start; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .node rect { fill: #202a2a; stroke: var(--line); stroke-width: 1; cursor: pointer; }
+  .node.selected rect { stroke: var(--accent); stroke-width: 2; }
+  .node.broken rect { stroke: var(--danger); }
+  .node text { fill: var(--text); font-size: 12px; pointer-events: none; }
+  .node text.sub { fill: var(--muted); font-size: 11px; }
+  .link { fill: none; stroke: var(--line); stroke-width: 2; }
+  .link.broken { stroke: var(--danger); stroke-dasharray: 4 4; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--mono); font-size: 12px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 0 0 12px; }
+  dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; margin: 0 0 14px; font-size: 13px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; font-family: var(--mono); overflow-wrap: anywhere; }
+  button { font: inherit; color: #172017; background: var(--accent); border: 1px solid var(--accent);
+    border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .badge { border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; font-size: 11px; }
+  .badge.ok { border-color: var(--ok); color: var(--ok); }
+  .badge.bad { border-color: var(--danger); color: var(--danger); }
+  .empty { color: var(--muted); font-size: 14px; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .legend span { display: inline-flex; gap: 6px; align-items: center; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .page { width: calc(100% - 24px); padding: 20px 0 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div>
+      <h1>{{PROJECT_TITLE}} · provenance viewer</h1>
+      <div class="meta" id="meta">loading chain…</div>
+    </div>
+    <nav class="meta"><a href="dashboard.html">Build dashboard →</a></nav>
+  </header>
+
+  <div class="layout">
+    <section class="panel">
+      <h2>Chain</h2>
+      <div class="legend">
+        <span><i class="swatch" style="background:#bce8bd"></i>verified link</span>
+        <span><i class="swatch" style="background:#ffb4a9"></i>broken link</span>
+      </div>
+      <svg id="chain" viewBox="0 0 420 520" role="img" aria-label="Provenance chain from genesis to the selected instrument"></svg>
+      <p class="meta" id="chain-caption">Each node links to the CID it records as its predecessor.</p>
+    </section>
+
+    <section class="panel" id="detail" tabindex="-1">
+      <h2>Instrument</h2>
+      <div id="detail-body"><p class="empty">Select a node in the chain.</p></div>
+    </section>
+  </div>
+</div>
+
+<script src="vendor/d3.v7.min.js"></script>
+<script src="mermaid_diagram.js"></script>
+<script>
+  const OK = "#bce8bd", BAD = "#ffb4a9";
+  let record = null;
+  let instruments = [];
+  let selected = null;
+
+  function integrity(rows) {
+    return rows.map(function (item, index) {
+      if (index === 0) return item.previous === "000" || !item.previous;
+      return item.previous === rows[index - 1].cid;
+    });
+  }
+
+  function draw() {
+    const svg = d3.select("#chain");
+    svg.selectAll("*").remove();
+    if (!instruments.length) {
+      svg.append("text").attr("x", 8).attr("y", 40).attr("fill", "#a5b0a9").text("no data");
+      return;
+    }
+    const healthy = integrity(instruments);
+    const boxH = 54, gap = 62, width = 420;
+    const nodes = instruments.map(function (item, index) {
+      return { item: item, index: index, healthy: healthy[index], y: 16 + index * (boxH + gap - 8) };
+    });
+    svg.attr("viewBox", "0 0 " + width + " " + (16 + nodes.length * (boxH + gap - 8)));
+
+    svg
+      .append("g")
+      .selectAll("path")
+      .data(nodes.filter((node) => node.index > 0))
+      .join("path")
+      .attr("class", function (node) { return "link" + (node.healthy ? "" : " broken"); })
+      .attr("d", function (node) {
+        const from = node.y - (gap - 8);
+        return "M" + width / 4 + "," + from + " V" + (node.y - 10);
+      });
+
+    const group = svg
+      .append("g")
+      .selectAll("g")
+      .data(nodes)
+      .join("g")
+      .attr("class", function (node) {
+        return "node" + (node.healthy ? "" : " broken") + (node.item.cid === selected ? " selected" : "");
+      })
+      .attr("transform", function (node) { return "translate(0," + node.y + ")"; })
+      .attr("tabindex", 0)
+      .attr("role", "button")
+      .attr("aria-label", function (node) { return "Instrument " + node.item.instrument + " on layer " + node.item.layer; })
+      .on("click", function (event, node) { select(node.item.cid); })
+      .on("keydown", function (event, node) {
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(node.item.cid); }
+      });
+
+    group.append("rect").attr("x", 8).attr("y", 0).attr("width", width - 16).attr("height", boxH).attr("rx", 8);
+    group.append("text").attr("x", 20).attr("y", 22).text(function (node) {
+      return node.item.instrument + " · " + node.item.layer;
+    });
+    group.append("text").attr("class", "sub").attr("x", 20).attr("y", 40).text(function (node) {
+      return (node.item.cid || "").slice(0, 26) + "… " + (node.healthy ? "· verified link" : "· broken link");
+    });
+  }
+
+  function select(cid) {
+    selected = cid;
+    draw();
+    const item = instruments.find((row) => row.cid === cid);
+    const body = document.getElementById("detail-body");
+    if (!item) {
+      body.innerHTML = '<p class="empty">Select a node in the chain.</p>';
+      return;
+    }
+    const chain = instruments.slice(0, instruments.indexOf(item) + 1);
+    body.innerHTML = "";
+
+    const dl = document.createElement("dl");
+    [
+      ["instrument", item.instrument],
+      ["layer", item.layer],
+      ["mode", item.mode],
+      ["created", item.created_at],
+      ["prompt sha256", item.prompt_sha256],
+      ["cid", item.cid],
+      ["previous", item.previous],
+    ].forEach(function (pair) {
+      const dt = document.createElement("dt");
+      dt.textContent = pair[0];
+      const dd = document.createElement("dd");
+      dd.textContent = pair[1] || "—";
+      dl.append(dt, dd);
+    });
+    body.append(dl);
+
+    const state = document.createElement("p");
+    const badge = document.createElement("span");
+    badge.className = "badge " + (item.verified ? "ok" : "bad");
+    badge.textContent = item.verified ? "verified" : "unverified";
+    state.append(badge);
+    state.append(document.createTextNode(" " + (item.prompt_chars || 0) + " prompt characters"));
+    body.append(state);
+
+    const heading = document.createElement("h2");
+    heading.textContent = "Canonical record";
+    const pre = document.createElement("pre");
+    pre.textContent = JSON.stringify(chain, null, 2);
+    body.append(heading, pre);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = "Copy Mermaid";
+    button.addEventListener("click", function () {
+      const source = provenanceToMermaid(instruments);
+      const mermaidPre = document.getElementById("mermaid");
+      mermaidPre.textContent = source;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(source).catch(function () {
+          button.textContent = "Mermaid below";
+        });
+      }
+      button.textContent = "Copied Mermaid";
+      setTimeout(function () { button.textContent = "Copy Mermaid"; }, 1800);
+    });
+    const mermaidPre = document.createElement("pre");
+    mermaidPre.id = "mermaid";
+    mermaidPre.textContent = "flowchart TD\n  (press Copy Mermaid to build the diagram source)";
+    body.append(button, mermaidPre);
+  }
+
+  function render(data) {
+    record = data;
+    instruments = data.instruments || [];
+    const verified = instruments.filter((item) => item.verified).length;
+    document.getElementById("meta").textContent =
+      data.namespace + " · " + instruments.length + " instruments · " + verified + " verified · " + data.generated_at;
+    draw();
+    const wanted = new URLSearchParams(window.location.search).get("cid");
+    select(wanted && instruments.some((row) => row.cid === wanted) ? wanted : (instruments[0] || {}).cid);
+  }
+
+  fetch("../provenance.json", { cache: "no-store" })
+    .then((response) => (response.ok ? response.json() : Promise.reject(new Error("HTTP " + response.status))))
+    .then(render)
+    .catch(function () {
+      document.getElementById("meta").textContent = "no data — run the generator first";
+      document.getElementById("detail-body").innerHTML = '<p class="empty">no data</p>';
+      draw();
+    });
+</script>
+</body>
+</html>

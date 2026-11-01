@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeuralCommons App Generator</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #111718; --panel: #192122; --panel-raised: #202a2a; --line: #34403e;
+    --text: #edf0e9; --muted: #a5b0a9; --accent: #d7ed9c; --accent-ink: #172017;
+    --ok: #bce8bd; --warning: #f3d791; --danger: #ffb4a9;
+    --mono: "Cascadia Code", SFMono-Regular, Consolas, monospace;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); min-width: 320px; }
+  .page { width: min(1080px, calc(100% - 40px)); margin: 0 auto; padding: 32px 0 64px; }
+  a { color: var(--accent); }
+  .top { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; justify-content: space-between;
+    border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+  .eyebrow { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: 30px; margin: 6px 0 8px; letter-spacing: -0.02em; }
+  .lede { margin: 0; max-width: 52ch; color: var(--muted); line-height: 1.5; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  button, .button { font: inherit; border-radius: 9px; padding: 10px 16px; cursor: pointer; text-decoration: none;
+    border: 1px solid var(--accent); }
+  #run { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  #run:disabled { opacity: 0.6; cursor: progress; }
+  .ghost { border-color: var(--line); color: var(--text); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; font-size: 12px; }
+  .badge { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--muted); }
+  .badge strong { color: var(--text); font-weight: 600; }
+  .badge.ok { border-color: var(--ok); color: var(--ok); }
+  .badge.warn { border-color: var(--warning); color: var(--warning); }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-top: 24px; }
+  h2 { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
+  h3 { font-size: 15px; margin: 0; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .stat { background: var(--panel-raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .stat .value { font-size: 20px; font-weight: 650; letter-spacing: -0.02em; }
+  .stat .label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+  .layers { display: grid; gap: 12px; }
+  .layer { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; background: var(--panel-raised); }
+  .layer-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+  .file { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .layer-stats { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .layer-stats span strong { color: var(--text); font-weight: 600; }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; font-size: 12px; color: var(--accent); width: fit-content; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--mono); font-size: 12px; line-height: 1.55;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 10px 0 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--line); }
+  th { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .mono { font-family: var(--mono); overflow-wrap: anywhere; }
+  ul.files { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-family: var(--mono); font-size: 12px;
+    columns: 2; column-gap: 24px; }
+  ul.files li { break-inside: avoid; overflow-wrap: anywhere; }
+  .links { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; margin-bottom: 16px; }
+  .muted { color: var(--muted); }
+  .error { color: var(--danger); }
+  @media (max-width: 640px) {
+    .page { width: calc(100% - 24px); padding: 20px 0 40px; }
+    ul.files { columns: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div>
+      <div class="eyebrow">NeuralCommons · CVP + Ollama</div>
+      <h1>App Generator</h1>
+      <p class="lede">A Base64 prompt library drives the generation of the backend, frontend and visual
+        tools for a Commons Vector Protocol system. One run builds a complete application in <code class="mono">output/</code>.</p>
+    </div>
+    <div class="actions">
+      {% if archive_url %}<a class="button ghost" href="{{ archive_url }}" target="_blank" rel="noreferrer">Archive ↗</a>{% endif %}
+      <button id="run" type="button">Generate application</button>
+    </div>
+  </header>
+
+  <div class="badges">
+    <span class="badge">namespace <strong>{{ config.namespace }}</strong></span>
+    <span class="badge">model <strong>{{ config.model }}</strong></span>
+    <span class="badge">dictionary <strong>{{ config.dictionary.name }}</strong></span>
+    <span class="badge {{ 'ok' if ollama.available else 'warn' }}" id="ollama-badge">
+      {% if ollama.available %}ollama online · {{ ollama.models|join(', ') }}{% else %}ollama offline · template fallback{% endif %}
+    </span>
+  </div>
+
+  <section class="panel" id="result-panel">
+    <h2>Build</h2>
+    <div id="result">
+      {% if build %}
+      <div class="stats">
+        <div class="stat"><div class="value">{{ build.mode }}</div><div class="label">mode</div></div>
+        <div class="stat"><div class="value">{{ build.instruments|length }}</div><div class="label">instruments</div></div>
+        <div class="stat"><div class="value">{{ files|length }}</div><div class="label">files</div></div>
+        <div class="stat"><div class="value">{{ build.generated_at }}</div><div class="label">built at (UTC)</div></div>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>Layer</th><th>Mode</th><th>Prompt sha256</th><th>CID</th></tr></thead>
+        <tbody>
+          {% for item in build.instruments %}
+          <tr>
+            <td>{{ item.instrument }}</td>
+            <td>{{ item.layer }}</td>
+            <td>{{ item.mode }}</td>
+            <td class="mono">{{ item.prompt_sha256[:12] }}…</td>
+            <td class="mono">{{ item.cid[:12] }}…</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No build yet — run the generator to produce the application.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Prompt library · Base64</h2>
+    <div class="layers">
+      {% for prompt in prompts %}
+      <article class="layer">
+        <div class="layer-head">
+          <h3>{{ prompt.label }}</h3>
+          <span class="file">{{ prompt.file }}</span>
+        </div>
+        <div class="layer-stats">
+          <span><strong>{{ prompt.chars }}</strong> chars decoded</span>
+          <span><strong>{{ prompt.bytes }}</strong> bytes encoded</span>
+          <span>sha256 <strong class="mono">{{ prompt.sha256[:12] }}</strong></span>
+          <span><strong>{{ prompt.artifacts|length }}</strong> artifacts</span>
+        </div>
+        <details>
+          <summary>Show decoded prompt</summary>
+          <pre>{{ prompt.prompt }}</pre>
+        </details>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Generated application</h2>
+    <div class="links">
+      <a href="/generated/visual_tools/dashboard.html" target="_blank" rel="noreferrer">Build dashboard ↗</a>
+      <a href="/generated/visual_tools/d3_provenance_chain.html" target="_blank" rel="noreferrer">Provenance viewer ↗</a>
+      <a href="/generated/provenance.json" target="_blank" rel="noreferrer">provenance.json ↗</a>
+    </div>
+    <ul class="files" id="files">
+      {% for file in files %}<li><a href="/generated/{{ file }}" target="_blank" rel="noreferrer">{{ file }}</a></li>{% endfor %}
+    </ul>
+    <p class="muted" id="files-empty" {% if files %}hidden{% endif %}>No files generated yet.</p>
+  </section>
+</div>
+
+<script>
+  const button = document.getElementById("run");
+  const result = document.getElementById("result");
+  const filesList = document.getElementById("files");
+  const filesEmpty = document.getElementById("files-empty");
+
+  function shortText(value, size) {
+    return value && value.length > size ? value.slice(0, size) + "…" : (value || "—");
+  }
+
+  function renderResult(summary) {
+    const instruments = summary.instruments || [];
+    result.innerHTML = "";
+
+    const stats = document.createElement("div");
+    stats.className = "stats";
+    [
+      [summary.mode, "mode"],
+      [instruments.length, "instruments"],
+      [(summary.files || []).length, "files"],
+      [summary.duration_ms + " ms", "build time"],
+    ].forEach(function (pair) {
+      const box = document.createElement("div");
+      box.className = "stat";
+      const value = document.createElement("div");
+      value.className = "value";
+      value.textContent = pair[0];
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = pair[1];
+      box.append(value, label);
+      stats.append(box);
+    });
+    result.append(stats);
+
+    const table = document.createElement("table");
+    const head = document.createElement("tr");
+    ["#", "Layer", "Mode", "Prompt sha256", "CID"].forEach(function (name) {
+      const th = document.createElement("th");
+      th.textContent = name;
+      head.append(th);
+    });
+    const thead = document.createElement("thead");
+    thead.append(head);
+    const tbody = document.createElement("tbody");
+    instruments.forEach(function (item) {
+      const row = document.createElement("tr");
+      [item.instrument, item.layer, item.mode, shortText(item.prompt_sha256, 12), shortText(item.cid, 12)].forEach(function (cell, index) {
+        const td = document.createElement("td");
+        td.textContent = cell;
+        if (index >= 3) td.className = "mono";
+        row.append(td);
+      });
+      tbody.append(row);
+    });
+    table.append(thead, tbody);
+    result.append(table);
+  }
+
+  function renderFiles(files) {
+    filesList.innerHTML = "";
+    (files || []).forEach(function (file) {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = "/generated/" + file;
+      link.target = "_blank";
+      link.rel = "noreferrer";
+      link.textContent = file;
+      li.append(link);
+      filesList.append(li);
+    });
+    filesEmpty.hidden = (files || []).length > 0;
+  }
+
+  button.addEventListener("click", async function () {
+    button.disabled = true;
+    button.textContent = "Generating…";
+    try {
+      const response = await fetch("/api/generate", { method: "POST" });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const summary = await response.json();
+      renderResult(summary);
+      renderFiles(summary.files);
+      button.textContent = "Generated";
+      setTimeout(function () { button.textContent = "Generate application"; }, 1600);
+    } catch (error) {
+      const message = document.createElement("p");
+      message.className = "error";
+      message.textContent = "Generation failed: " + error.message;
+      result.prepend(message);
+      button.textContent = "Generate application";
+    } finally {
+      button.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

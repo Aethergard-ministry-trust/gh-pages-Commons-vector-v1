@@ -1,0 +1,5 @@
+# Generated application (rebuilt by scripts/generate_app.py)
+neuralcommons-app-generator/output/
+
+__pycache__/
+*.pyc

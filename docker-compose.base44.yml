@@ -1,0 +1,131 @@
+name: commons-vector-v1-base44
+
+services:
+  generator:
+    image: python:3.12-slim
+    restart: on-failure
+    working_dir: /app/neuralcommons-app-generator
+    ports:
+      - "3000:8000"
+    volumes:
+      - ./:/app
+    environment:
+      - BASE44_PREVIEW_MODE
+      - OLLAMA_URL=http://127.0.0.1:11434
+      - ARCHIVE_URL=https://3001-${BASE44_PUBLIC_HOST_SUFFIX}
+    # Rebuild the application from prompts on boot, then serve the console with live reload.
+    command:
+      - sh
+      - -ec
+      - |
+        pip install --no-cache-dir -r requirements.txt
+        python scripts/generate_app.py
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload \
+          --reload-dir app --reload-dir scripts --reload-dir templates --reload-dir prompts
+    labels:
+      base44.project: "NeuralCommons App Generator"
+      base44.kind: web
+      base44.port: "3000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request,sys;
+          sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+  # The application produced by the generator (see neuralcommons-app-generator/output).
+  # Both services mount the generated tree, so a new generation run is picked up live.
+  built-api:
+    image: python:3.12-slim
+    restart: on-failure
+    working_dir: /app/backend
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./neuralcommons-app-generator/output/backend:/app/backend
+    environment:
+      - BASE44_PREVIEW_MODE
+      - CVP_FRONTEND_ORIGIN=https://3002-${BASE44_PUBLIC_HOST_SUFFIX}
+    command:
+      - sh
+      - -ec
+      - |
+        pip install --no-cache-dir -r requirements.txt
+        exec uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      generator:
+        condition: service_healthy
+    labels:
+      base44.project: "Built App V1"
+      base44.kind: api
+      base44.port: "8002"
+      base44.docs: /docs
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request,sys;
+          sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  built-app:
+    image: node:22-slim
+    restart: on-failure
+    working_dir: /app/frontend
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./neuralcommons-app-generator/output/frontend:/app/frontend
+    environment:
+      - BASE44_PREVIEW_MODE
+      - NEXT_TELEMETRY_DISABLED=1
+      - WATCHPACK_POLLING=true
+      # The browser and the server-rendered pages both call the API on its public origin.
+      - NEXT_PUBLIC_CVP_API_URL=https://8002-${BASE44_PUBLIC_HOST_SUFFIX}
+    command:
+      - sh
+      - -ec
+      - |
+        npm install --no-audit --no-fund --loglevel=error
+        exec npx next dev --hostname 0.0.0.0 --port 3000
+    depends_on:
+      built-api:
+        condition: service_healthy
+    labels:
+      base44.project: "Built App V1"
+      base44.kind: web
+      base44.port: "3002"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/instruments').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+
+  archive:
+    image: nginx:alpine
+    restart: on-failure
+    ports:
+      - "3001:80"
+    volumes:
+      - ./:/usr/share/nginx/html:ro
+      - ./.base44/nginx.conf:/etc/nginx/nginx.conf:ro
+    environment:
+      - BASE44_PREVIEW_MODE
+    labels:
+      base44.project: "Det Levende Arkivet"
+      base44.kind: web
+      base44.port: "3001"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
