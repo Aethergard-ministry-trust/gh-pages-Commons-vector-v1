@@ -1,0 +1,41 @@
+{
+  "project": "neuralcommons-app-generator",
+  "namespace": "commons-vector-v1",
+  "dictionary": {
+    "name": "TRUST-ORDBOK-v2.0-IPFS",
+    "cid": "bafkreiah7zzhane2iwpijyx7qiuwajqbmaep3a4pnvuo5f4jcakm4ibnzi"
+  },
+  "provider": "ollama",
+  "model": "neuralcommons",
+  "ollama_url": "http://127.0.0.1:11434",
+  "ollama_timeout_seconds": 120,
+  "fallback": "templates",
+  "output_dir": "output",
+  "layers": [
+    {
+      "id": "backend",
+      "label": "Backend · FastAPI + CVP",
+      "prompt": "prompts/backend_prompt.base64"
+    },
+    {
+      "id": "frontend",
+      "label": "Frontend · Next.js",
+      "prompt": "prompts/frontend_prompt.base64"
+    },
+    {
+      "id": "dashboard",
+      "label": "Visual · Dashboard (D3)",
+      "prompt": "prompts/dashboard_prompt.base64"
+    },
+    {
+      "id": "provenance_viewer",
+      "label": "Visual · Provenance Viewer",
+      "prompt": "prompts/provenance_viewer_prompt.base64"
+    },
+    {
+      "id": "ipfs_integration",
+      "label": "Protocol · IPFS + ed25519",
+      "prompt": "prompts/ipfs_integration_prompt.base64"
+    }
+  ]
+}

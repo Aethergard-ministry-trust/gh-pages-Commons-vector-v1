@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{PROJECT_TITLE}} · Build dashboard</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #111718; --panel: #192122; --line: #34403e; --text: #edf0e9;
+    --muted: #a5b0a9; --accent: #d7ed9c; --ok: #bce8bd; --danger: #ffb4a9;
+    --mono: "Cascadia Code", SFMono-Regular, Consolas, monospace;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); min-width: 320px; }
+  .page { width: min(1080px, calc(100% - 40px)); margin: 0 auto; padding: 32px 0 64px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 13px; margin: 0 0 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .meta { color: var(--muted); font-size: 13px; font-family: var(--mono); overflow-wrap: anywhere; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 24px 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .card .value { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; }
+  .card .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+  figure { margin: 0; }
+  figcaption { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .tick text { fill: var(--muted); font-size: 11px; }
+  .axis line, .axis path { stroke: var(--line); }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  td.mono, .mono { font-family: var(--mono); overflow-wrap: anywhere; }
+  .badge { border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; font-size: 11px; white-space: nowrap; }
+  .badge.ok { border-color: var(--ok); color: var(--ok); }
+  .badge.bad { border-color: var(--danger); color: var(--danger); }
+  .empty { color: var(--muted); font-size: 14px; }
+  a { color: var(--accent); }
+  @media (max-width: 560px) {
+    .page { width: calc(100% - 24px); padding: 20px 0 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div>
+      <h1>{{PROJECT_TITLE}} · build dashboard</h1>
+      <div class="meta" id="meta">loading build record…</div>
+    </div>
+    <nav class="meta"><a href="d3_provenance_chain.html">Provenance viewer →</a></nav>
+  </header>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="panel">
+    <h2>Prompt size per layer</h2>
+    <figure>
+      <svg id="bars" viewBox="0 0 720 260" role="img" aria-label="Prompt characters per generated layer"></svg>
+      <figcaption>Characters in the Base64-decoded prompt that produced each layer.</figcaption>
+    </figure>
+  </div>
+
+  <div class="panel">
+    <h2>Verification</h2>
+    <div class="legend">
+      <span><i class="swatch" style="background:#bce8bd"></i>verified</span>
+      <span><i class="swatch" style="background:#ffb4a9"></i>unverified</span>
+    </div>
+    <figure>
+      <svg id="split" viewBox="0 0 720 110" role="img" aria-label="Verification state of each instrument in the build chain"></svg>
+      <figcaption id="split-caption">Each block is one instrument in the build provenance chain.</figcaption>
+    </figure>
+  </div>
+
+  <div class="panel">
+    <h2>Build chain</h2>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Layer</th><th>Mode</th><th>Prompt</th><th>CID</th><th>State</th></tr>
+      </thead>
+      <tbody id="rows"><tr><td colspan="6" class="empty">loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="vendor/d3.v7.min.js"></script>
+<script>
+  const OK = "#bce8bd", BAD = "#ffb4a9", LINE = "#34403e", MUTED = "#a5b0a9", ACCENT = "#d7ed9c";
+
+  function shortCid(cid) {
+    return cid ? cid.slice(0, 8) + "…" + cid.slice(-4) : "—";
+  }
+
+  function render(record) {
+    const instruments = record.instruments || [];
+    document.getElementById("meta").textContent =
+      record.namespace + " · " + record.model + " · " + record.provider + " · " + record.generated_at;
+
+    const verified = instruments.filter((item) => item.verified).length;
+    const cards = [
+      { value: instruments.length, label: "instruments" },
+      { value: new Set(instruments.map((item) => item.prompt_sha256)).size, label: "distinct prompts" },
+      { value: verified + "/" + instruments.length, label: "chain verified" },
+      { value: record.mode === "ollama" ? "ollama" : "template", label: "generation mode" },
+    ];
+    document.getElementById("cards").innerHTML = cards
+      .map((card) => '<div class="card"><div class="value">' + card.value + '</div><div class="label">' + card.label + "</div></div>")
+      .join("");
+
+    // Bars: prompt characters per layer.
+    const svg = d3.select("#bars");
+    svg.selectAll("*").remove();
+    if (!instruments.length) {
+      svg.append("text").attr("x", 8).attr("y", 40).attr("fill", MUTED).text("no data");
+    } else {
+      const data = instruments.map((item) => ({ layer: item.layer, chars: item.prompt_chars }));
+      const margin = { top: 10, right: 60, bottom: 24, left: 130 };
+      const width = 720 - margin.left - margin.right;
+      const height = 260 - margin.top - margin.bottom;
+      const g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      const y = d3.scaleBand().domain(data.map((d) => d.layer)).range([0, height]).padding(0.35);
+      const x = d3.scaleLinear().domain([0, d3.max(data, (d) => d.chars) || 1]).nice().range([0, width]);
+      g.append("g").attr("class", "axis").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x).ticks(4));
+      g.append("g").attr("class", "axis").call(d3.axisLeft(y).tickSize(0)).selectAll("text").attr("fill", "#edf0e9").attr("font-size", 12);
+      g.selectAll("rect")
+        .data(data)
+        .join("rect")
+        .attr("x", 0)
+        .attr("y", (d) => y(d.layer))
+        .attr("height", y.bandwidth())
+        .attr("width", (d) => x(d.chars))
+        .attr("rx", 4)
+        .attr("fill", ACCENT)
+        .attr("opacity", 0.85);
+      g.selectAll(".value-label")
+        .data(data)
+        .join("text")
+        .attr("class", "value-label")
+        .attr("x", (d) => x(d.chars) + 8)
+        .attr("y", (d) => y(d.layer) + y.bandwidth() / 2 + 4)
+        .attr("fill", MUTED)
+        .attr("font-size", 11)
+        .text((d) => d.chars);
+    }
+
+    // Split: one block per instrument, coloured by verification.
+    const split = d3.select("#split");
+    split.selectAll("*").remove();
+    if (!instruments.length) {
+      split.append("text").attr("x", 8).attr("y", 40).attr("fill", MUTED).text("no data");
+    } else {
+      const scale = d3.scaleBand().domain(instruments.map((_, index) => index)).range([0, 720]).padding(0.12);
+      split
+        .selectAll("rect")
+        .data(instruments)
+        .join("rect")
+        .attr("x", (_, index) => scale(index))
+        .attr("y", 20)
+        .attr("width", scale.bandwidth())
+        .attr("height", 44)
+        .attr("rx", 5)
+        .attr("fill", (d) => (d.verified ? OK : BAD))
+        .attr("opacity", 0.8);
+      split
+        .selectAll("text")
+        .data(instruments)
+        .join("text")
+        .attr("x", (_, index) => scale(index) + scale.bandwidth() / 2)
+        .attr("y", 84)
+        .attr("text-anchor", "middle")
+        .attr("fill", MUTED)
+        .attr("font-size", 11)
+        .text((d) => d.instrument);
+    }
+    document.getElementById("split-caption").textContent =
+      verified + " of " + instruments.length + " instruments verify against their canonical bytes.";
+
+    document.getElementById("rows").innerHTML = instruments.length
+      ? instruments
+          .map(function (item) {
+            return (
+              "<tr><td>" + item.instrument +
+              "</td><td>" + item.layer +
+              '</td><td><span class="badge">' + item.mode +
+              '</span></td><td class="mono">' + item.prompt_sha256.slice(0, 12) + "…" +
+              '</td><td class="mono">' + shortCid(item.cid) +
+              '</td><td><span class="badge ' + (item.verified ? "ok" : "bad") + '">' +
+              (item.verified ? "verified" : "unverified") + "</span></td></tr>"
+            );
+          })
+          .join("")
+      : '<tr><td colspan="6" class="empty">no data</td></tr>';
+  }
+
+  fetch("../provenance.json", { cache: "no-store" })
+    .then((response) => (response.ok ? response.json() : Promise.reject(new Error("HTTP " + response.status))))
+    .then(render)
+    .catch(() => {
+      document.getElementById("meta").textContent = "no data — run the generator first";
+      document.getElementById("rows").innerHTML = '<tr><td colspan="6" class="empty">no data</td></tr>';
+    });
+</script>
+</body>
+</html>
