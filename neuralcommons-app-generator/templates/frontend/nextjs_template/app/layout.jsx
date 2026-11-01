@@ -43,7 +43,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" style={theme}>
       <body>
-        <style>{css}</style>
+        <style dangerouslySetInnerHTML={{ __html: css }} />
         <div className="page">
           <header className="top">
             <h1>{{PROJECT_TITLE}}</h1>

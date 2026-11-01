@@ -97,10 +97,8 @@ docker compose -f neuralcommons-app-generator/output/docker-compose.yml config -
   canonical bytes when written, so a broken `previous` link shows as unverified in the viewer.
 - The generated Next.js frontend **is** installed and run by `built-app` (`npm install` on startup,
   ~10 s, into the git-ignored `output/frontend/node_modules`).
-- Next's dev overlay shows a "1 error" badge on every generated page: React reports a hydration
-  text mismatch (`Text content does not match server-rendered HTML`). The rendered DOM matches the
-  served HTML for the app's own content (dictionary, instrument rows, nav), and the cause is not
-  identified yet — treat the badge as a known, undiagnosed dev-only warning, not as proof the page
-  is wrong.
+- The layout injects its CSS with `<style dangerouslySetInnerHTML={{ __html: css }} />`. A plain
+  `<style>{css}</style>` makes React fail hydration with `Text content does not match
+  server-rendered HTML` and the dev overlay shows a red "1 error" badge on every page.
 - The built app has no create/edit UI; instruments are written through `POST /instruments` on the
   generated API. The instruments and provenance pages only read.
