@@ -171,8 +171,11 @@ def create_instrument(body: InstrumentIn) -> dict:
         "payload": body.payload,
         "public_key": public_key_b64(key),
     }
-    record["cid"] = content_cid(record)
-    record["signature"] = base64.b64encode(key.sign(canonical_json(record))).decode("ascii")
+    # Sign and hash the same bytes verify() recomputes: the record without cid/signature.
+    cid = content_cid(record)
+    signature = base64.b64encode(key.sign(canonical_json(record))).decode("ascii")
+    record["cid"] = cid
+    record["signature"] = signature
     append_ledger(record)
     return record
 

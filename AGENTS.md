@@ -24,6 +24,27 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3001/   # archive site
 | --- | --- | --- |
 | `generator` | 3000 | `python:3.12-slim`, checkout mounted at `/app`, `uvicorn --reload` |
 | `archive` | 3001 | `nginx:alpine` serving the checkout |
+| `built-app` | 3002 | the generated Next.js frontend (`output/frontend`), `next dev`, project "Built App V1" |
+| `built-api` | 8002 | the generated FastAPI app (`output/backend`), `uvicorn --reload`, project "Built App V1" |
+
+## Running the built app
+
+`built-app` / `built-api` mount `neuralcommons-app-generator/output/` and start only after
+`generator` is healthy, so the generated tree always exists first. The frontend reaches the API on
+its public origin (`NEXT_PUBLIC_CVP_API_URL=https://8002-$BASE44_PUBLIC_HOST_SUFFIX`, both for the
+browser and for server-rendered pages), and the API allows exactly the frontend origin through
+`CVP_FRONTEND_ORIGIN`.
+
+**Restart both after every generation run.** A generation wipes and recreates `output/`, which
+leaves the running containers holding deleted directories (Next's watcher loses `app/`, the API's
+cwd disappears and `mkdir data` fails). Pressing *Generate application* therefore requires:
+
+```bash
+docker compose -f docker-compose.base44.yml restart built-api built-app
+```
+
+The generated ledger (`output/backend/data/`) and its Ed25519 key live inside `output/`, so every
+generation resets the instrument chain — expected for a build artifact, not a bug.
 
 `generator` runs on boot, in this order: `pip install -r requirements.txt` →
 `python scripts/generate_app.py` → `uvicorn app.main:app`. Dependencies are installed on every
@@ -54,8 +75,13 @@ Edits to prompts or templates only reach `output/` after a generation run — pr
 ## Verification
 
 ```bash
-docker compose -f docker-compose.base44.yml ps                  # both services healthy
+docker compose -f docker-compose.base44.yml ps                  # all services healthy
 curl -s http://localhost:3000/health                           # {"status":"ok",...}
+curl -s http://localhost:8002/health                           # built app API
+curl -s -X POST http://localhost:8002/instruments -H 'Content-Type: application/json' \
+  -d '{"payload":{"check":1}}'                                 # 201; then /verify/<cid> → verified true
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3002/ # built app overview (SSR)
+docker compose -f docker-compose.base44.yml logs --tail=20 built-app
 curl -s http://localhost:3000/api/status | head -c 300         # ollama probe + output files
 docker compose -f docker-compose.base44.yml exec -T generator \
   python scripts/generate_app.py --no-ollama                   # CLI build path
@@ -69,5 +95,12 @@ docker compose -f neuralcommons-app-generator/output/docker-compose.yml config -
   in this environment; the dashboard and provenance viewer should each render 5 nodes.
 - `provenance.json` chain integrity: every instrument's `verified` is recomputed from its
   canonical bytes when written, so a broken `previous` link shows as unverified in the viewer.
-- The generated Next.js frontend is **not** installed or run in the sandbox (no `npm install`);
-  treat its files as source output, not a verified running app.
+- The generated Next.js frontend **is** installed and run by `built-app` (`npm install` on startup,
+  ~10 s, into the git-ignored `output/frontend/node_modules`).
+- Next's dev overlay shows a "1 error" badge on every generated page: React reports a hydration
+  text mismatch (`Text content does not match server-rendered HTML`). The rendered DOM matches the
+  served HTML for the app's own content (dictionary, instrument rows, nav), and the cause is not
+  identified yet — treat the badge as a known, undiagnosed dev-only warning, not as proof the page
+  is wrong.
+- The built app has no create/edit UI; instruments are written through `POST /instruments` on the
+  generated API. The instruments and provenance pages only read.
